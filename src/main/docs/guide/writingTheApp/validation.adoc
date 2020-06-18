@@ -16,9 +16,9 @@ include::{sourceDir}/src/test/groovy/example/micronaut/MailControllerValidationS
 In order to satisfy the test, create an email constraints annotation
 
 [source,java]
-.src/main/groovy/example/micronaut/EmailConstraints.java
+.src/main/java/example/micronaut/EmailConstraints.java
 ----
-include::{sourceDir}/src/main/groovy/example/micronaut/EmailConstraints.java[]
+include::{sourceDir}/src/main/java/example/micronaut/EmailConstraints.java[]
 ----
 
 and a contraint validator in a `@Factory` class:

@@ -4,52 +4,46 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.annotation.MicronautTest
-import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
 
 @MicronautTest // <1>
-@Property(name = 'spec.name', value = 'mailcontroller') // <2>
+@Property(name = "spec.name", value = "mailcontroller") // <2>
 class MailControllerSpec extends Specification {
 
-    @Shared
     @Inject
     ApplicationContext applicationContext // <3>
 
-    @Shared
     @Inject
     @Client("/")
     RxHttpClient client // <4>
 
-    def "/mail/send interacts once email service"() {
+    void "mail send interacts once email service"() {
         given:
-        EmailCmd cmd = new EmailCmd(subject: 'Test',
-                                    recipient: 'delamos@grails.example',
-                                    textBody: 'Hola hola')
-        HttpRequest request = HttpRequest.POST('/mail/send', cmd) // <5>
+        EmailCmd cmd = new EmailCmd(subject: "Test", recipient: "delamos@grails.example", textBody: "Hola hola")
+        HttpRequest<EmailCmd> request = HttpRequest.POST("/mail/send", cmd) // <5>
 
         when:
-        Collection<Class> emailServices = applicationContext.getBeansOfType(EmailService)
+        Collection<EmailService> emailServices = applicationContext.getBeansOfType(EmailService.class)
 
         then:
-        !emailServices.any { it == SendGridEmailService.class}
-        !emailServices.any { it == AwsSesMailService.class}
+        1 == emailServices.size()
 
         when:
-        EmailService emailService = applicationContext.getBean(EmailService)
+        EmailService emailService = applicationContext.getBean(EmailService.class)
 
         then:
         emailService instanceof MockEmailService
 
         when:
-        HttpResponse rsp = client.toBlocking().exchange(request)
-
+        HttpResponse<?> rsp = client.toBlocking().exchange(request)
         then:
-        rsp.status.code == 200
-        ((MockEmailService)emailService).emails.size() == old(((MockEmailService)emailService).emails.size()) + 1 // <6>
+        HttpStatus.OK == rsp.getStatus()
+        old(((MockEmailService) emailService).emails.size()) + 1 == ((MockEmailService) emailService).emails.size() // <6>
     }
 }
