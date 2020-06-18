@@ -6,7 +6,7 @@ import spock.util.environment.RestoreSystemProperties
 class SendGridEmailConditionSpec extends Specification {
 
     @RestoreSystemProperties
-    def "condition is true if system properties are present"() {
+    void "condition is true if system properites are present"() {
         given:
         System.setProperty("sendgrid.apikey", "XXXX")
         System.setProperty("sendgrid.fromemail", "me@micronaut.example")
@@ -16,7 +16,7 @@ class SendGridEmailConditionSpec extends Specification {
         condition.matches(null)
     }
 
-    def "condition is false if system properties are not present"() {
+    void "condition is false if system properties are not present"() {
         given:
         SendGridEmailCondition condition = new SendGridEmailCondition()
 

@@ -1,43 +1,36 @@
 package example.micronaut
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.exceptions.NoSuchBeanException
-import io.micronaut.runtime.server.EmbeddedServer
 import spock.lang.Specification
 import spock.util.environment.RestoreSystemProperties
 
 class SendGridEmailServiceSpec extends Specification {
 
-    def "SendGridEmailService is not loaded if system property is not present"() {
+    void "send grid email service is not loaded if system property is not present"() {
         given:
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        ApplicationContext ctx = ApplicationContext.run()
 
-        when:
-        embeddedServer.applicationContext.getBean(SendGridEmailService)
-
-        then:
-        thrown(NoSuchBeanException)
+        expect:
+        !ctx.containsBean(SendGridEmailService.class)
 
         cleanup:
-        embeddedServer.close()
+        ctx.close()
     }
 
     @RestoreSystemProperties
-    def "SendGridEmailService is loaded if system property is not present"() {
+    void "send grid email service is loaded if system properties are present"() {
         given:
         System.setProperty("sendgrid.apikey", "XXXX")
         System.setProperty("sendgrid.fromemail", "me@micronaut.example")
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        ApplicationContext ctx = ApplicationContext.run()
+        SendGridEmailService bean = ctx.getBean(SendGridEmailService.class)
 
-        when:
-        SendGridEmailService bean = embeddedServer.applicationContext.getBean(SendGridEmailService)
-
-        then:
-        noExceptionThrown()
-        bean.apiKey == 'XXXX'
-        bean.fromEmail == 'me@micronaut.example'
+        expect:
+        "XXXX" == bean.apiKey
+        "me@micronaut.example" == bean.fromEmail
 
         cleanup:
-        embeddedServer.close()
+        ctx.close()
+
     }
 }

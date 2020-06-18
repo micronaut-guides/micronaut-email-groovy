@@ -4,100 +4,84 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.http.client.exceptions.HttpClientResponseException
 import io.micronaut.test.annotation.MicronautTest
-import spock.lang.Shared
 import spock.lang.Specification
-
 import javax.inject.Inject
 
 @MicronautTest // <1>
-@Property(name = 'spec.name', value = 'mailcontroller') // <2>
+@Property(name = "spec.name", value = "mailcontroller") // <2>
 class MailControllerValidationSpec extends Specification {
 
-    @Shared
     @Inject
-    ApplicationContext applicationContext
+    ApplicationContext applicationContext;
 
-    @Shared
     @Inject
     @Client("/")
-    RxHttpClient client
+    RxHttpClient client;
 
-    def "/mail/send cannot be invoked without subject"() {
+    void "mail send cannot be invoked without subject"() {
         given:
-        EmailCmd cmd = new EmailCmd(
-                recipient: 'delamos@micronaut.example',
-                textBody: 'Hola hola')
-        HttpRequest request = HttpRequest.POST('/mail/send', cmd) // <3>
+        EmailCmd cmd = new EmailCmd(recipient: "delamos@micronaut.example", textBody: "Hola hola")
+        HttpRequest<EmailCmd> request = HttpRequest.POST("/mail/send", cmd) // <3>
 
         when:
         client.toBlocking().exchange(request)
 
         then:
-        HttpClientResponseException e = thrown(HttpClientResponseException)
-        e.status.code == 400
+        HttpClientResponseException e = thrown()
+        HttpStatus.BAD_REQUEST == e.status
     }
 
-    def "/mail/send cannot be invoked without recipient"() {
+    void "mail send cannot be invoked without recipient"() {
         given:
-        EmailCmd cmd = new EmailCmd(
-                subject: 'Hola',
-                textBody: 'Hola hola')
-        HttpRequest request = HttpRequest.POST('/mail/send', cmd) // <3>
+        EmailCmd cmd = new EmailCmd(subject: "Hola", textBody: "Hola hola")
+        HttpRequest<EmailCmd> request = HttpRequest.POST("/mail/send", cmd) // <3>
 
         when:
         client.toBlocking().exchange(request)
 
         then:
-        HttpClientResponseException e = thrown(HttpClientResponseException)
-        e.status.code == 400
+        HttpClientResponseException e = thrown()
+        HttpStatus.BAD_REQUEST == e.status
     }
 
-    def "/mail/send cannot be invoked without either textBody or htmlBody"() {
-        given:
-        EmailCmd cmd = new EmailCmd(
-                subject: 'Hola',
-                recipient: 'delamos@micronaut.example',)
-        HttpRequest request = HttpRequest.POST('/mail/send', cmd) // <3>
+    void "mail send cannot be invoked without either text body or html body"() {
+        EmailCmd cmd = new EmailCmd(subject: "Hola", recipient: "delamos@micronaut.example")
+        HttpRequest<EmailCmd> request = HttpRequest.POST("/mail/send", cmd) // <3>
 
         when:
         client.toBlocking().exchange(request)
 
         then:
-        HttpClientResponseException e = thrown(HttpClientResponseException)
-        e.status.code == 400
+        HttpClientResponseException e = thrown()
+        HttpStatus.BAD_REQUEST == e.status
     }
 
-    def "/mail/send can be invoked without textBody and not htmlBody"() {
+    void "mail send can be invoked without text body and not html body"() {
         given:
-        EmailCmd cmd = new EmailCmd(
-                subject: 'Hola',
-                recipient: 'delamos@micronaut.example',
-                textBody: 'Hello')
-        HttpRequest request = HttpRequest.POST('/mail/send', cmd) // <3>
+        EmailCmd cmd = new EmailCmd(subject: "Hola", recipient: "delamos@micronaut.example", textBody: "Hello")
+        HttpRequest<EmailCmd> request = HttpRequest.POST("/mail/send", cmd) // <3>
 
         when:
-        HttpResponse rsp = client.toBlocking().exchange(request)
+        HttpResponse<?> rsp = client.toBlocking().exchange(request)
 
         then:
-        rsp.status().code == 200
+        HttpStatus.OK == rsp.getStatus()
     }
 
-    def "/mail/send can be invoked without htmlBody and not textBody"() {
+    void "mail send can be invoked with html body and not text body"() {
         given:
-        EmailCmd cmd = new EmailCmd(
-                subject: 'Hola',
-                recipient: 'delamos@micronaut.example',
-                htmlBody: '<h1>Hello</h1>')
-        HttpRequest request = HttpRequest.POST('/mail/send', cmd) // <3>
+        EmailCmd cmd = new EmailCmd(subject: "Hola", recipient: "delamos@micronaut.example", htmlBody: "<h1>Hello</h1>")
+        HttpRequest<EmailCmd> request = HttpRequest.POST("/mail/send", cmd) // <3>
 
         when:
-        HttpResponse rsp = client.toBlocking().exchange(request)
+        HttpResponse<?> rsp = client.toBlocking().exchange(request)
 
         then:
-        rsp.status().code == 200
+        HttpStatus.OK == rsp.getStatus()
     }
 }

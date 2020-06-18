@@ -1,8 +1,5 @@
-package example.micronaut
+package example.micronaut;
 
-import groovy.transform.CompileStatic
-
-@CompileStatic
 interface Email {
     String getRecipient()
     List<String> getCc()

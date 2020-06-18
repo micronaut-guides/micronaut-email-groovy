@@ -1,7 +1,3 @@
 micronaut:
   application:
     name: complete
----
-sendgrid:
-  apikey: '${SENDGRID_APIKEY}'
-  fromemail: '${SENDGRID_FROM_EMAIL}'

@@ -1,46 +1,38 @@
-package example.micronaut
+package example.micronaut;
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.exceptions.NoSuchBeanException
-import io.micronaut.runtime.server.EmbeddedServer
 import spock.lang.Specification
 import spock.util.environment.RestoreSystemProperties
 
 class AwsSesMailServiceSpec extends Specification {
 
-    def "AwsSesMailService is not loaded if system property is not present"() {
+    void "aws ses mail service is not loaded if system property is not present"() {
         given:
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        ApplicationContext ctx = ApplicationContext.run()
 
-        when:
-        embeddedServer.applicationContext.getBean(AwsSesMailService)
-
-        then:
-        thrown(NoSuchBeanException)
+        expect:
+        !ctx.containsBean(AwsSesMailService.class)
 
         cleanup:
-        embeddedServer.close()
+        ctx.close();
     }
 
     @RestoreSystemProperties
-    def "AwsSesMailService is loaded if system property is not present"() {
+    void "aws ses mail service is loaded if system properties are present"() {
         given:
+        System.setProperty("aws.accessKeyId", "XXXX")
+        System.setProperty("aws.secretAccessKey", "YKYY")
         System.setProperty("aws.region", "XXXX")
         System.setProperty("aws.sourceemail", "me@micronaut.example")
-        System.setProperty("aws.accesskeyid", "XXXX")
-        System.setProperty("aws.secretkey", "YYYY")
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        ApplicationContext ctx = ApplicationContext.run()
 
         when:
-        embeddedServer.applicationContext.getBean(AwsCredentialsProviderService)
-        AwsSesMailService bean = embeddedServer.applicationContext.getBean(AwsSesMailService)
+        AwsSesMailService bean = ctx.getBean(AwsSesMailService.class)
 
         then:
-        noExceptionThrown()
-        bean.sourceEmail == 'me@micronaut.example'
-        bean.awsRegion == 'XXXX'
+        "me@micronaut.example" == bean.sourceEmail
 
         cleanup:
-        embeddedServer.close()
+        ctx.close()
     }
 }

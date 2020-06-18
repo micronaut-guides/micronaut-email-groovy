@@ -4,66 +4,13 @@ ____
 
 Add a dependency to AWS SES SDK:
 
-[source,groovy]
+[source,java]
 .build.gradle
 ----
 include::{sourceDir}/build.gradle[tag=awsses,indent=0]
 ----
 
-Create a service which encapsulates AWS credentials provider. The bean will not be loaded if the
-environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_KEY`) or system properties ( `aws.accesskeyid`, `aws.secretkey`) are not present.
-
-
-[source,groovy]
-.src/main/groovy/example/micronaut/AwsCredentialsProviderCondition.groovy
-----
-include::{sourceDir}/src/main/groovy/example/micronaut/AwsCredentialsProviderCondition.groovy[]
-----
-
-Add a test:
-
-[source,groovy]
-.src/test/groovy/example/micronaut/AwsCredentialsProviderConditionSpec.groovy
-----
-include::{sourceDir}/src/test/groovy/example/micronaut/AwsCredentialsProviderConditionSpec.groovy[]
-----
-
-[source,groovy]
-.src/main/groovy/example/micronaut/AwsCredentialsProviderService.groovy
-----
-include::{sourceDir}/src/main/groovy/example/micronaut/AwsCredentialsProviderService.groovy[]
-----
-
-<1> Use `javax.inject.Singleton` to designate a class a a singleton
-<2> Bean will not loaded unless condition is met.
-<3> Values will be resolved from system properties.
-
-Add a test:
-
-[source,groovy]
-.src/test/groovy/example/micronaut/AwsCredentialsProviderServiceSpec.groovy
-----
-include::{sourceDir}/src/test/groovy/example/micronaut/AwsCredentialsProviderServiceSpec.groovy[]
-----
-
-Create a service which sends the email with AWS Simple Email Service. The bean will not be loaded if the
-environment variables (`AWS_REGION`, `AWS_SOURCE_EMAIL`) or system properties (`aws.region`, `aws.sourceemail`) are not present.
-
-
-[source,groovy]
-.src/main/groovy/example/micronaut/AwsSesMailCondition.groovy
-----
-include::{sourceDir}/src/main/groovy/example/micronaut/AwsSesMailCondition.groovy[]
-----
-
-
-Add a test:
-
-[source,groovy]
-.src/test/groovy/example/micronaut/AwsSesMailConditionSpec.groovy
-----
-include::{sourceDir}/src/test/groovy/example/micronaut/AwsSesMailConditionSpec.groovy[]
-----
+Create service which uses AWS Simple Email Service client to send the email
 
 [source,groovy]
 .src/main/groovy/example/micronaut/AwsSesMailService.groovy
@@ -72,13 +19,32 @@ include::{sourceDir}/src/main/groovy/example/micronaut/AwsSesMailService.groovy[
 ----
 
 <1> Use `javax.inject.Singleton` to designate a class a a singleton
-<2> Bean will not loaded, if bean is not present.
-<3> Bean will not loaded unless condition is met.
-<4> `@Primary` is a qualifier that indicates that a bean is the primary bean that should be selected in the case of multiple possible interface implementations.
-<5> Values will be resolved from system properties.
+<2> Bean will not loaded unless condition is met.
+<3> In case of multiple possible interface implementations of `EmailService`, `@Secondary` reduces the priority.
+<4> Values for region and source email are resolved from environment variables or system properties.
 
+We annotated the previous class with `@Requires(condition = AwsResourceAccessCondition.class)`.
 
-Add a test:
+The `AwsResourceAccessCondition` ensures the bean is not loaded unless certain conditions are fulfilled.
+
+https://docs.aws.amazon.com/sdk-for-java/v2/developer-guide/java-dg-roles.html[_Configure IAM Roles for Amazon EC2_]
+____
+> If your application creates an AWS client using the create method, the client searches for credentials using the default credentials provider chain, in the following order:
+
+> * In the Java system properties: `aws.accessKeyId` and `aws.secretAccessKey`.
+> * In system environment variables: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+> * In the default credentials file (the location of this file varies by platform).
+> * n the Amazon ECS environment variable: `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`.
+> * In the instance profile credentials, which exist within the instance metadata associated with the IAM role for the EC2 instance.
+____
+
+[source,groovy]
+.src/main/groovy/example/micronaut/AwsResourceAccessCondition.groovy
+----
+include::{sourceDir}/src/main/groovy/example/micronaut/AwsResourceAccessCondition.groovy[]
+----
+
+Add a test to verify the service is loaded:
 
 [source,groovy]
 .src/test/groovy/example/micronaut/AwsSesMailServiceSpec.groovy

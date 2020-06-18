@@ -1,8 +1,10 @@
 package example.micronaut
 
-import groovy.transform.CompileStatic
+import edu.umd.cs.findbugs.annotations.NonNull
 
-@CompileStatic
+import javax.validation.Valid
+import javax.validation.constraints.NotNull
+
 interface EmailService {
-    void send(Email email)
+    void send(@NonNull @NotNull @Valid Email email)
 }
